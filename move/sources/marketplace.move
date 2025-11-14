@@ -1,7 +1,7 @@
 module challenge::marketplace {
 
 use challenge::hero::{Self, Hero, transfer_hero};
-use sui::object::{Self, UID, ID};
+use sui::object::{Self, UID, ID, id_from_uid}; // id_from_uid eklendi
 use sui::transfer;
 use sui::tx_context::{Self, TxContext};
 use sui::coin::{Self, Coin, from_balance};
@@ -109,8 +109,8 @@ public fun buy_hero(list_hero: ListHero, payment: Coin<SUI>, ctx: &mut TxContext
 
     // HeroBought event'i yayınlanıyor
     event::emit(HeroBought {
-        // UID'den ID alma fonksiyonunu kullanıyoruz (Bu, E05001 hatasını çözer)
-        list_hero_id: object::uid_to_id(&list_hero_uid),
+        // DÜZELTME: object::uid_to_id yerine object::id_from_uid kullanılır
+        list_hero_id: id_from_uid(&list_hero_uid),
         price: price,
         buyer: buyer,
         seller: seller,
