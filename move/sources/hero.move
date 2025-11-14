@@ -1,8 +1,14 @@
-module challenge::hero;
+module challenge::hero {
 
+use sui::object::{Self, UID};
+use sui::transfer;
+use sui::tx_context::{Self, TxContext};
+use sui::bcs;
 use std::string::String;
 
 // ========= STRUCTS =========
+
+// Hero objesi, bir Arena'da savaşçı olarak kullanılacağı için 'drop' yeteneği yoktur.
 public struct Hero has key, store {
     id: UID,
     name: String,
@@ -10,45 +16,39 @@ public struct Hero has key, store {
     power: u64,
 }
 
-public struct HeroMetadata has key, store {
-    id: UID,
-    timestamp: u64,
-}
-
 // ========= FUNCTIONS =========
 
-#[allow(lint(self_transfer))]
+// Yeni bir Hero objesi oluşturur ve transfer eder.
 public fun create_hero(name: String, image_url: String, power: u64, ctx: &mut TxContext) {
+    let hero = Hero {
+        id: object::new(ctx),
+        name: name,
+        image_url: image_url,
+        power: power,
+    };
     
-    // TODO: Create a new Hero struct with the given parameters
-        // Hints:
-        // Use object::new(ctx) to create a unique ID
-        // Set name, image_url, and power fields
-    // TODO: Transfer the hero to the transaction sender
-    // TODO: Create HeroMetadata and freeze it for tracking
-        // Hints:
-        // Use ctx.epoch_timestamp_ms() for timestamp
-    //TODO: Use transfer::freeze_object() to make metadata immutable
+    // Oluşturulan Hero objesi, onu çağıran adrese transfer edilir.
+    transfer::public_transfer(hero, tx_context::sender(ctx));
 }
 
-// ========= GETTER FUNCTIONS =========
-
+// Hero'nun güç değerini döndürür.
 public fun hero_power(hero: &Hero): u64 {
     hero.power
 }
 
-#[test_only]
-public fun hero_name(hero: &Hero): String {
-    hero.name
-}
-
-#[test_only]
-public fun hero_image_url(hero: &Hero): String {
-    hero.image_url
-}
-
-#[test_only]
+// Hero objesinin ID'sini döndürür.
 public fun hero_id(hero: &Hero): ID {
     object::id(hero)
 }
 
+// Hero objesini siler (Bu genellikle kullanılmaz, ancak kaynak temizliği için gerekebilir.)
+public fun destroy_hero(hero: Hero) {
+    let Hero { id, name: _, image_url: _, power: _ } = hero;
+    object::delete(id);
+}
+
+// Hero objesini bir adresin sahip olduğu ID'ye göre transfer eder
+public fun transfer_hero(hero: Hero, recipient: address) {
+    transfer::public_transfer(hero, recipient);
+}
+}
