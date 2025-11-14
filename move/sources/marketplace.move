@@ -109,7 +109,8 @@ public fun buy_hero(list_hero: ListHero, payment: Coin<SUI>, ctx: &mut TxContext
 
     // HeroBought event'i yayınlanıyor
     event::emit(HeroBought {
-        list_hero_id: object::id_from_uid(&list_hero_uid),
+        // DÜZELTME: object::id_from_uid yerine object::id(&UID) kullanıyoruz
+        list_hero_id: object::id(&list_hero_uid),
         price: price,
         buyer: buyer,
         seller: seller,
