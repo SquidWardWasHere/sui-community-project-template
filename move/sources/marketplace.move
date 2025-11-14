@@ -109,8 +109,8 @@ public fun buy_hero(list_hero: ListHero, payment: Coin<SUI>, ctx: &mut TxContext
 
     // HeroBought event'i yayınlanıyor
     event::emit(HeroBought {
-        // DÜZELTME: object::id_from_uid yerine object::id(&UID) kullanıyoruz
-        list_hero_id: object::id(&list_hero_uid),
+        // UID'den ID alma fonksiyonunu kullanıyoruz (Bu, E05001 hatasını çözer)
+        list_hero_id: object::uid_to_id(&list_hero_uid),
         price: price,
         buyer: buyer,
         seller: seller,
