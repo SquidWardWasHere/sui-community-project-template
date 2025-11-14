@@ -1,10 +1,10 @@
 module challenge::marketplace {
 
-use challenge::hero::{Self, Hero, transfer_hero}; // Hero transfer fonksiyonunu kullanmak için içe aktarıldı
+use challenge::hero::{Self, Hero, transfer_hero};
 use sui::object::{Self, UID, ID};
 use sui::transfer;
 use sui::tx_context::{Self, TxContext};
-use sui::coin::{Self, Coin};
+use sui::coin::{Self, Coin, from_balance}; // coin::from_balance fonksiyonunu doğrudan çağırabilmek için from_balance eklendi
 use sui::sui::SUI;
 use sui::event;
 use sui::balance;
@@ -16,15 +16,17 @@ const EInvalidPayment: u64 = 1;
 // ========= STRUCTS =========
 
 public struct ListHero has key, store {
-    id: UID,
+    id: UID, // DÜZELTME: ListHero objesi "key" yeteneğine sahip olduğu için ilk alan zorunlu olarak 'id: UID' olmalı
     nft: Hero,
     price: u64,
     seller: address,
 }
 
-public struct AdminCap has key, store {}
+public struct AdminCap has key, store {
+    id: UID, // DÜZELTME: AdminCap objesi "key" yeteneğine sahip olduğu için zorunlu olarak 'id: UID' eklendi
+}
 
-// ========= EVENTS =========
+// ========= EVENTS (Aynı kaldı) =========
 
 public struct HeroListed has copy, drop {
     list_hero_id: ID,
@@ -45,8 +47,10 @@ public struct HeroBought has copy, drop {
 
 // Marketplace'in ilk başlatılması
 fun init(ctx: &mut TxContext) {
+    // AdminCap objesi oluşturuluyor (ID'si object::new(ctx) ile atanır)
+    let admin_cap = AdminCap { id: object::new(ctx) };
     // AdminCap objesi oluşturulur ve göndericiye transfer edilir
-    transfer::transfer(AdminCap {}, tx_context::sender(ctx));
+    transfer::transfer(admin_cap, tx_context::sender(ctx));
 }
 
 // Bir Hero objesini Marketplace'e listeler
@@ -63,7 +67,7 @@ public fun list_hero(nft: Hero, price: u64, ctx: &mut TxContext) {
 
     // HeroListed event'i yayınlanıyor
     event::emit(HeroListed {
-        list_hero_id: object::id(&list_hero),
+        list_hero_id: object::id(&list_hero), // DÜZELTME: Struct'ın tamamı key olduğu için object::id(&list_hero) kullanılabilir
         price: price,
         seller: seller,
         timestamp: tx_context::epoch_timestamp_ms(ctx),
@@ -87,14 +91,17 @@ public fun buy_hero(list_hero: ListHero, payment: Coin<SUI>, ctx: &mut TxContext
 
     // 2. Parayı satıcıya gönder
     let balance = coin::into_balance(payment); // Coin'i Balance'a çeviriyoruz
-    let change = balance::split(&mut balance, price); // Fiyat kadarını ayırıyoruz
+    let mut balance_mut = balance; // balance'ı mut olarak tanımla
+    let change = balance::split(&mut balance_mut, price); // Fiyat kadarını ayırıyoruz
 
     // Fiyatı satıcının adresine transfer ediyoruz
-    transfer::public_transfer(coin::from_balance(balance), seller);
+    // DÜZELTME: from_balance artık 2. argüman olarak ctx: &mut TxContext gerektiriyor
+    transfer::public_transfer(from_balance(balance_mut, ctx), seller);
 
     // Fazlalığı (change) alıcıya geri gönderiyoruz
     if (balance::value(&change) > 0) {
-        transfer::public_transfer(coin::from_balance(change), buyer);
+        // DÜZELTME: from_balance artık 2. argüman olarak ctx: &mut TxContext gerektiriyor
+        transfer::public_transfer(from_balance(change, ctx), buyer);
     };
 
     // HeroBought event'i yayınlanıyor
