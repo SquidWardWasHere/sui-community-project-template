@@ -44,9 +44,9 @@ public struct HeroBought has copy, drop {
 // ========= FUNCTIONS =========
 
 // Marketplace'in ilk başlatılması
-fun init(_ctx: &mut TxContext) {
+fun init(ctx: &mut TxContext) {
     // AdminCap objesi oluşturulur ve göndericiye transfer edilir
-    transfer::transfer(AdminCap {}, tx_context::sender(_ctx));
+    transfer::transfer(AdminCap {}, tx_context::sender(ctx));
 }
 
 // Bir Hero objesini Marketplace'e listeler
