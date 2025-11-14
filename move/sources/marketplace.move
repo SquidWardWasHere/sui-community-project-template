@@ -7,7 +7,7 @@ use sui::tx_context::{Self, TxContext};
 use sui::coin::{Self, Coin, from_balance};
 use sui::sui::SUI;
 use sui::event;
-use sui::balance::{Self, Balance, destroy_zero}; // destroy_zero eklendi
+use sui::balance::{Self, Balance, destroy_zero}; 
 
 // ========= ERROR CODES =========
 
@@ -109,7 +109,6 @@ public fun buy_hero(list_hero: ListHero, payment: Coin<SUI>, ctx: &mut TxContext
 
     // HeroBought event'i yayınlanıyor
     event::emit(HeroBought {
-        // DÜZELTME: object::id_from_uid kullanıldı, çünkü event ID'si için UID gerekiyor
         list_hero_id: object::id_from_uid(&list_hero_uid),
         price: price,
         buyer: buyer,
